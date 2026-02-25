@@ -14,7 +14,7 @@ Upload MP4
        │
        ▼
 ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
-│ Speech Agent │  │ Vision Agent │  │ Semantic Agent    │
+│ Speech Agent │  │ Vision Agent │  │ Semantic Agent   │
 │ (WhisperX)   │  │ (MediaPipe)  │  │ (Transformers)   │
 └──────┬───────┘  └──────┬───────┘  └──────┬───────────┘
        │                 │                  │
