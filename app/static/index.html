@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pro Auto-Trim</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+    .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+    h1 { font-size: 1.8rem; margin-bottom: 6px; }
+    h1 span { color: #7c6aef; }
+    .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 32px; }
+
+    /* upload area */
+    .upload-area {
+      border: 2px dashed #333; border-radius: 12px; padding: 48px 24px;
+      text-align: center; cursor: pointer; transition: border-color 0.2s;
+      margin-bottom: 20px;
+    }
+    .upload-area:hover, .upload-area.dragover { border-color: #7c6aef; }
+    .upload-area p { color: #888; }
+    .upload-area .icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .upload-area input { display: none; }
+
+    /* video preview */
+    .preview { margin-bottom: 20px; display: none; }
+    .preview video { width: 100%; border-radius: 8px; background: #000; }
+    .file-info { color: #888; font-size: 0.8rem; margin-top: 6px; }
+
+    /* button */
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+      background: #7c6aef; color: #fff;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* progress */
+    .progress-section { display: none; margin-top: 24px; }
+    .progress-bar-track {
+      width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%; background: #7c6aef; border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .progress-text { color: #aaa; font-size: 0.85rem; margin-top: 8px; }
+    .stage-badge {
+      display: inline-block; background: #1a1a2e; color: #7c6aef;
+      padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; margin-top: 6px;
+    }
+
+    /* output */
+    .output-section { display: none; margin-top: 32px; }
+    .output-section h2 { font-size: 1.2rem; margin-bottom: 12px; }
+    .output-section video { width: 100%; border-radius: 8px; background: #000; }
+    .download-btn {
+      display: inline-block; margin-top: 12px; padding: 10px 24px;
+      background: #1db954; color: #fff; text-decoration: none;
+      border-radius: 6px; font-weight: 600; font-size: 0.9rem;
+    }
+    .download-btn:hover { opacity: 0.9; }
+    .stats { color: #888; font-size: 0.8rem; margin-top: 8px; }
+    .error { color: #ef4444; margin-top: 12px; font-size: 0.9rem; display: none; }
+    .reset-btn {
+      display: inline-block; margin-top: 16px; margin-left: 8px; padding: 10px 24px;
+      background: #333; color: #ccc; text-decoration: none;
+      border-radius: 6px; font-weight: 600; font-size: 0.9rem; border: none; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✂️ <span>Pro</span> Auto-Trim</h1>
+    <p class="subtitle">upload raw footage → get a clean, tight edit</p>
+
+    <!-- upload -->
+    <div class="upload-area" id="dropZone">
+      <div class="icon">📁</div>
+      <p>Drop your video here or <strong>click to browse</strong></p>
+      <p style="font-size:0.75rem; margin-top:4px;">.mp4 .mov .avi .mkv</p>
+      <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv" />
+    </div>
+
+    <!-- input preview -->
+    <div class="preview" id="inputPreview">
+      <video id="inputVideo" controls></video>
+      <div class="file-info" id="fileInfo"></div>
+    </div>
+
+    <button class="btn" id="trimBtn" disabled>Auto Trim (Pro)</button>
+    <div class="error" id="errorMsg"></div>
+
+    <!-- progress -->
+    <div class="progress-section" id="progressSection">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-text" id="progressText">Starting...</div>
+      <div class="stage-badge" id="stageBadge">queued</div>
+    </div>
+
+    <!-- output -->
+    <div class="output-section" id="outputSection">
+      <h2>✅ Your trimmed video</h2>
+      <video id="outputVideo" controls></video>
+      <div class="stats" id="outputStats"></div>
+      <div>
+        <a class="download-btn" id="downloadBtn" href="#" download>⬇ Download</a>
+        <button class="reset-btn" id="resetBtn">↻ Start Over</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const inputPreview = document.getElementById('inputPreview');
+    const inputVideo = document.getElementById('inputVideo');
+    const fileInfo = document.getElementById('fileInfo');
+    const trimBtn = document.getElementById('trimBtn');
+    const progressSection = document.getElementById('progressSection');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const stageBadge = document.getElementById('stageBadge');
+    const outputSection = document.getElementById('outputSection');
+    const outputVideo = document.getElementById('outputVideo');
+    const outputStats = document.getElementById('outputStats');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    let selectedFile = null;
+
+    // drag & drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+    function handleFile(file) {
+      selectedFile = file;
+      const url = URL.createObjectURL(file);
+      inputVideo.src = url;
+      inputPreview.style.display = 'block';
+      dropZone.style.display = 'none';
+      fileInfo.textContent = `${file.name} — ${(file.size / 1024 / 1024).toFixed(1)} MB`;
+      trimBtn.disabled = false;
+      errorMsg.style.display = 'none';
+      outputSection.style.display = 'none';
+    }
+
+    // submit
+    trimBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+      trimBtn.disabled = true;
+      trimBtn.textContent = 'Uploading...';
+      errorMsg.style.display = 'none';
+
+      const form = new FormData();
+      form.append('file', selectedFile);
+
+      try {
+        const res = await fetch('/auto-trim', { method: 'POST', body: form });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Upload failed');
+        }
+        const data = await res.json();
+        trimBtn.textContent = 'Processing...';
+        progressSection.style.display = 'block';
+        pollStatus(data.job_id);
+      } catch (e) {
+        errorMsg.textContent = e.message;
+        errorMsg.style.display = 'block';
+        trimBtn.disabled = false;
+        trimBtn.textContent = 'Auto Trim (Pro)';
+      }
+    });
+
+    // poll
+    async function pollStatus(jobId) {
+      try {
+        const res = await fetch(`/jobs/${jobId}`);
+        const data = await res.json();
+
+        progressFill.style.width = data.progress + '%';
+        progressText.textContent = data.message || `${data.progress}%`;
+        stageBadge.textContent = data.stage;
+
+        if (data.stage === 'completed' && data.output_ready) {
+          progressFill.style.width = '100%';
+          progressText.textContent = 'Done!';
+          showOutput(jobId, data);
+          return;
+        }
+
+        if (data.stage === 'failed') {
+          errorMsg.textContent = data.error || 'Something went wrong';
+          errorMsg.style.display = 'block';
+          trimBtn.disabled = false;
+          trimBtn.textContent = 'Auto Trim (Pro)';
+          progressSection.style.display = 'none';
+          return;
+        }
+
+        setTimeout(() => pollStatus(jobId), 1500);
+      } catch {
+        setTimeout(() => pollStatus(jobId), 3000);
+      }
+    }
+
+    function showOutput(jobId, data) {
+      const videoUrl = `/jobs/${jobId}/download`;
+      outputVideo.src = videoUrl;
+      downloadBtn.href = videoUrl;
+      downloadBtn.download = `trimmed_${jobId}.mp4`;
+
+      if (data.timings) {
+        const total = Object.values(data.timings).reduce((a, b) => a + b, 0);
+        outputStats.textContent = `Processed in ${total.toFixed(1)}s on ${data.device || 'cpu'}`;
+      }
+
+      outputSection.style.display = 'block';
+      progressSection.style.display = 'none';
+      trimBtn.style.display = 'none';
+    }
+
+    // reset
+    resetBtn.addEventListener('click', () => {
+      selectedFile = null;
+      fileInput.value = '';
+      inputVideo.src = '';
+      outputVideo.src = '';
+      inputPreview.style.display = 'none';
+      outputSection.style.display = 'none';
+      progressSection.style.display = 'none';
+      dropZone.style.display = '';
+      trimBtn.style.display = '';
+      trimBtn.disabled = true;
+      trimBtn.textContent = 'Auto Trim (Pro)';
+      errorMsg.style.display = 'none';
+    });
+  </script>
+</body>
+</html>

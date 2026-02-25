@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
 
 from app.api.routes import router
 from app.core.config import settings
 from app.core.logging import setup_logging, log_device_info, get_logger
 
 logger = get_logger("main")
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 def create_app() -> FastAPI:
@@ -26,6 +31,10 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(router, tags=["Auto-Trim"])
+
+    @app.get("/")
+    async def serve_ui():
+        return FileResponse(str(STATIC_DIR / "index.html"))
 
     @app.on_event("startup")
     async def startup():
