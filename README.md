@@ -68,7 +68,7 @@ pip install -r requirements.txt
 ## Run the Server
 
 ```bash
-python run.py
+uvicorn app.main:app --reload
 ```
 
 Server starts at **http://localhost:8000**
@@ -92,7 +92,7 @@ Just open **http://localhost:8000** in your browser.
 
 ### API (Postman)
 
-Once the server is running (`python run.py`), the easiest way to test the pipeline is using Postman.
+Once the server is running (`uvicorn app.main:app --reload`), you can also test the API directly with Postman.
 
 ### 1. Upload & Start Auto-Trim
 - **Method:** `POST`
