@@ -1,0 +1,30 @@
+# env
+.env
+env/
+venv/
+.venv/
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# jobs (user uploads + outputs)
+jobs/
+
+# test artifacts
+test_audio.wav
+vol_output.txt
+
+# models (too large for git)
+app/models/
+
+# ide
+.vscode/
+.idea/
+
+# os
+Thumbs.db
+.DS_Store
