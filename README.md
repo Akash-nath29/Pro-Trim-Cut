@@ -16,7 +16,7 @@ Upload MP4
 ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
 │ Speech Agent │  │ Vision Agent │  │ Semantic Agent   │
 │ (WhisperX)   │  │ (MediaPipe)  │  │ (Transformers)   │
-└──────┬───────┘  └──────┬───────┘  └───────┬───────────┘
+└──────┬───────┘  └──────┬───────┘  └───────┬──────────┘
        │                 │                  │
        └────────┬────────┘──────────────────┘
                 │
@@ -45,8 +45,9 @@ Upload MP4
 ## Quick Setup
 
 ```bash
-# 1. Clone / navigate to project
-cd e:\Projects\agentic_video_editor
+# 1. Clone the repo
+git clone https://github.com/Akash-nath29/Pro-Trim-Cut.git
+cd Pro-Trim-Cut
 
 # 2. Create virtual environment
 python -m venv venv
@@ -72,10 +73,24 @@ python run.py
 
 Server starts at **http://localhost:8000**
 
+- **Web UI:** http://localhost:8000/ — upload, preview, trim, and download right in the browser
 - Swagger UI: http://localhost:8000/docs
 - Health check: http://localhost:8000/health
 
-## 🚀 API Usage (Testing with Postman)
+## Usage
+
+### Web Interface (Recommended)
+
+Just open **http://localhost:8000** in your browser.
+
+1. **Drop or select** your video file
+2. **Preview** the original footage
+3. Click **Auto Trim (Pro)**
+4. Watch the **progress bar** as the AI agents process your video
+5. **Play** the trimmed result to verify
+6. **Download** the final cut
+
+### API (Postman)
 
 Once the server is running (`python run.py`), the easiest way to test the pipeline is using Postman.
 
@@ -151,7 +166,9 @@ All settings via environment variables or `.env` file:
 ```
 app/
 ├── api/routes.py            # FastAPI endpoints
-├── main.py                  # App factory
+├── main.py                  # App factory + UI route
+├── static/
+│   └── index.html           # Web interface
 ├── agents/
 │   ├── base.py              # Abstract base agent
 │   ├── ingest.py            # Audio extraction + metadata
